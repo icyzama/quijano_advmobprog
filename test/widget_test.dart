@@ -1,25 +1,18 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'package:quijano_advmobprog/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    await tester.pumpWidget(
-      ChangeNotifierProvider(
-        create: (context) => ThemeModel(),
-        child: const CombinedApp(),
-      ),
-    );
+  TestWidgetsFlutterBinding.ensureInitialized();
 
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  setUpAll(() {
+    dotenv.testLoad(fileInput: 'HOST=https://dummyjson.com');
+  });
 
-    await tester.tap(find.byIcon(Icons.add));
+  testWidgets('App loads home screen', (WidgetTester tester) async {
+    await tester.pumpWidget(const QuijanoAdvMobProg());
     await tester.pump();
-
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('E-Commerce App'), findsOneWidget);
   });
 }
