@@ -20,6 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const CustomText(text: 'E-Commerce App', fontSize: 20, fontWeight: FontWeight.bold),
         actions: [
+          // Enhancement 3: Navigate to Settings (theme switch lives on that page).
           IconButton(
             icon: Icon(Icons.settings, size: 24.sp),
             onPressed: () => Navigator.pushNamed(context, '/settings'),

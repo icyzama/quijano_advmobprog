@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../models/product.dart';
 import '../widgets/custom_text.dart';
 
+// Enhancement 2: Details page shown when a product/article card is clicked.
 class ProductDetailScreen extends StatelessWidget {
   final Product product;
 
@@ -10,7 +11,7 @@ class ProductDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Enhancement 2: Detailed product view screen
+    // Enhancement 2: Full product details (image, title, price, description).
     return Scaffold(
       appBar: AppBar(
         title: CustomText(text: product.brand, fontSize: 18.sp, fontWeight: FontWeight.bold),

@@ -3,12 +3,13 @@ import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/custom_text.dart';
 
+// Enhancement 3: Settings page that hosts the dark/light mode switch.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Enhancement 3: Move dark/light mode switch to Settings Page
+    // Enhancement 3: Dark/light mode switch moved here from the home AppBar.
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(

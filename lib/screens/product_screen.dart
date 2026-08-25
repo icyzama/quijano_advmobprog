@@ -16,6 +16,7 @@ class _ProductScreenState extends State<ProductScreen> {
   late Future<List<Product>> _productsFuture;
   List<Product> _allProducts = [];
   List<Product> _filteredProducts = [];
+  // Enhancement 1: Search bar above the product/article list.
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -24,7 +25,7 @@ class _ProductScreenState extends State<ProductScreen> {
     _productsFuture = ProductService().getAllProducts();
   }
 
-  // Enhancement 1: Search bar logic
+  // Enhancement 1: Filter the list as the user types in the search bar.
   void _filterProducts(String query) {
     setState(() {
       _filteredProducts = _allProducts
@@ -40,7 +41,7 @@ class _ProductScreenState extends State<ProductScreen> {
         padding: EdgeInsets.all(16.w),
         child: Column(
           children: [
-            // Enhancement 1: Add Search Bar above the list
+            // Enhancement 1: Search bar placed above the product grid/list.
             TextField(
               controller: _searchController,
               onChanged: _filterProducts,
@@ -81,7 +82,7 @@ class _ProductScreenState extends State<ProductScreen> {
                     itemBuilder: (context, index) {
                       final product = _filteredProducts[index];
                       return GestureDetector(
-                        // Enhancement 2: Navigate to detail page on card tap
+                        // Enhancement 2: Open the details page when a product card is tapped.
                         onTap: () {
                           Navigator.push(
                             context,
