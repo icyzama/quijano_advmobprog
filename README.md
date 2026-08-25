@@ -1,17 +1,22 @@
-# quijano_advmobprog
+# Advanced Mobile Programming Projects
 
-A new Flutter project.
+Welcome to the central repository for my academic coursework in **Advanced Mobile Programming**. This repository contains my laboratory activities, project implementations, and source code developed throughout the course.
 
-## Getting Started
+## Repository Overview
 
-This project is a starting point for a Flutter application.
+* **Project Name**: `quijano_advmobprog`
+* **Focus**: Mobile Application Development, State Management, and UI Design
 
-A few resources to get you started if this is your first Flutter project:
+## Tech Stack & Tools
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+* **Framework**: Flutter
+* **Language**: Dart
+* **State Management**: `setState` (Ephemeral) & `Provider` (App State)
+* **IDE / Editor**: Visual Studio Code / Cursor
+* **Target Platforms**: Android, iOS, Web
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## How to Run the Project Locally
+
+1. **Navigate to the project directory**:
+   ```bash
+   cd quijano_advmobprog
