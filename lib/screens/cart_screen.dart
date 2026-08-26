@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../constants.dart';
 import '../models/cart.dart';
 import '../models/product.dart';
 import '../services/cart_service.dart';
@@ -15,14 +16,13 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  static const int _userId = 1;
   late Future<Cart> _cartFuture;
   final Map<int, int> _quantities = {};
 
   @override
   void initState() {
     super.initState();
-    _cartFuture = CartService().getCartByUserId(_userId);
+    _cartFuture = CartService().getCartByUserId(cartUserId);
   }
 
   void _changeQuantity(CartProduct product, int change) {

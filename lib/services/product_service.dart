@@ -5,7 +5,10 @@ import '../models/product.dart';
 
 class ProductService {
   Future<List<Product>> getAllProducts() async {
-    final response = await http.get(Uri.parse('$host/products'));
+    final uri = Uri.parse('$host/products').replace(
+      queryParameters: {'limit': '0'},
+    );
+    final response = await http.get(uri);
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = jsonDecode(response.body);
       final List productsJson = data['products'] ?? [];

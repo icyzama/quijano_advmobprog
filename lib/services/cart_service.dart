@@ -6,7 +6,7 @@ import '../constants.dart';
 import '../models/cart.dart';
 
 class CartService {
-  // Enhancement 3: Load one user's cart using DummyJSON's user-cart endpoint.
+  // DummyJSON returns a list for this endpoint; the app displays one user's first cart.
   Future<Cart> getCartByUserId(int userId) async {
     final response = await http.get(Uri.parse('$host/carts/user/$userId'));
 
@@ -21,8 +21,7 @@ class CartService {
     throw Exception('Failed to load cart');
   }
 
-  // Enhancement 3: Send a product and quantity to DummyJSON's add-cart API.
-  Future<void> addToCart({
+  Future<Cart> addToCart({
     required int userId,
     required int productId,
     required int quantity,
@@ -41,5 +40,7 @@ class CartService {
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw Exception('Failed to add product to cart');
     }
+
+    return Cart.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../constants.dart';
 import '../models/product.dart';
+import '../models/cart.dart';
 import '../services/cart_service.dart';
 import '../widgets/custom_text.dart';
 
@@ -21,11 +23,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     setState(() => _isAdding = true);
     try {
       // Enhancement 3: Add the displayed product to the selected user's cart.
-      await CartService()
-          .addToCart(userId: 1, productId: widget.product.id, quantity: 1);
+      final Cart cart = await CartService().addToCart(
+        userId: cartUserId,
+        productId: widget.product.id,
+        quantity: 1,
+      );
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Added to cart')));
+            .showSnackBar(SnackBar(content: Text('Added to cart ${cart.id}')));
       }
     } catch (error) {
       if (mounted) {
