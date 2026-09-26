@@ -17,7 +17,33 @@ class NuLogo extends StatelessWidget {
       child: Image.asset(
         AppAssets.nuLogo,
         fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+        errorBuilder: (_, __, ___) => _NuLogoFallback(size: size),
+      ),
+    );
+  }
+}
+
+class _NuLogoFallback extends StatelessWidget {
+  const _NuLogoFallback({required this.size});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size.w,
+      height: size.w,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: AppColors.nuBlue,
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: AppColors.nuGold, width: 3.w),
+      ),
+      child: CustomText(
+        text: 'NU',
+        fontSize: (size * 0.32).sp,
+        fontWeight: FontWeight.w800,
+        color: AppColors.nuGold,
       ),
     );
   }
