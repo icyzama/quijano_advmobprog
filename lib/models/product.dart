@@ -30,7 +30,8 @@ class Product {
       description: json['description'] ?? '',
       category: json['category'] ?? '',
       price: (json['price'] as num?)?.toDouble() ?? 0.0,
-      discountPercentage: (json['discountPercentage'] as num?)?.toDouble() ?? 0.0,
+      discountPercentage:
+          (json['discountPercentage'] as num?)?.toDouble() ?? 0.0,
       rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
       stock: json['stock'] ?? 0,
       brand: json['brand'] ?? 'Generic',

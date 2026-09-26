@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../constants.dart';
 import '../widgets/custom_text.dart';
+import '../widgets/lab4_components.dart';
 import 'cart_screen.dart';
+import 'profile_screen.dart';
 import 'product_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -16,16 +19,29 @@ class _HomeScreenState extends State<HomeScreen> {
   final PageController _pageController = PageController();
 
   @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: const Padding(
+          padding: EdgeInsets.only(left: 12),
+          child: NuLogo(size: 34),
+        ),
         title: const CustomText(
-            text: 'E-Commerce App', fontSize: 20, fontWeight: FontWeight.bold),
+          text: 'NU Commerce',
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
         actions: [
           // Enhancement 3: Navigate to Settings (theme switch lives on that page).
           IconButton(
             icon: Icon(Icons.settings, size: 24.sp),
-            onPressed: () => Navigator.pushNamed(context, '/settings'),
+            onPressed: () => Navigator.pushNamed(context, AppRoutes.settings),
           ),
         ],
       ),
@@ -35,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: const [
           ProductScreen(),
           CartScreen(),
-          Center(child: Text('Profile')),
+          ProfileScreen(),
         ],
       ),
       // Enhancement 2: Chat is a floating action instead of a bottom-nav item.

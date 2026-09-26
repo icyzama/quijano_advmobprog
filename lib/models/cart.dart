@@ -17,6 +17,18 @@ class Cart {
     required this.totalQuantity,
   });
 
+  factory Cart.emptyForUser(int userId) {
+    return Cart(
+      id: 0,
+      products: const [],
+      total: 0,
+      discountedTotal: 0,
+      userId: userId,
+      totalProducts: 0,
+      totalQuantity: 0,
+    );
+  }
+
   factory Cart.fromJson(Map<String, dynamic> json) {
     return Cart(
       id: json['id'] ?? 0,

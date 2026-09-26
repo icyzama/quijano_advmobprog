@@ -4,14 +4,18 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
+import 'constants.dart';
 import 'providers/theme_provider.dart';
 import 'screens/home_screen.dart';
+import 'screens/sign_in_screen.dart';
+import 'screens/splash_screen.dart';
 import 'screens/settings_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: 'assets/.env');
-  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]).then((_) {
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp])
+      .then((_) {
     runApp(const QuijanoAdvMobProg());
   });
 }
@@ -35,10 +39,12 @@ class QuijanoAdvMobProg extends StatelessWidget {
             theme: themeModel.lightTheme,
             darkTheme: themeModel.darkTheme,
             themeMode: themeModel.isDark ? ThemeMode.dark : ThemeMode.light,
-            initialRoute: '/home',
+            initialRoute: AppRoutes.splash,
             routes: {
-              '/home': (context) => const HomeScreen(),
-              '/settings': (context) => const SettingsScreen(),
+              AppRoutes.splash: (context) => const SplashScreen(),
+              AppRoutes.signIn: (context) => const SignInScreen(),
+              AppRoutes.home: (context) => const HomeScreen(),
+              AppRoutes.settings: (context) => const SettingsScreen(),
             },
           );
         },

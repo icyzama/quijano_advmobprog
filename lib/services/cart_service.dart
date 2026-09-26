@@ -14,7 +14,7 @@ class CartService {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       final carts = data['carts'] as List? ?? [];
       if (carts.isEmpty) {
-        throw Exception('No cart found for this user');
+        return Cart.emptyForUser(userId);
       }
       return Cart.fromJson(carts.first as Map<String, dynamic>);
     }

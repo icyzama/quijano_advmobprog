@@ -48,7 +48,8 @@ class _ProductScreenState extends State<ProductScreen> {
               decoration: InputDecoration(
                 hintText: 'Search products...',
                 prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.r)),
               ),
             ),
             SizedBox(height: 16.h),
@@ -60,10 +61,14 @@ class _ProductScreenState extends State<ProductScreen> {
                     return const Center(child: CircularProgressIndicator());
                   }
                   if (snapshot.hasError) {
-                    return Center(child: CustomText(text: 'Error: ${snapshot.error}', fontSize: 14.sp));
+                    return Center(
+                        child: CustomText(
+                            text: 'Error: ${snapshot.error}', fontSize: 14.sp));
                   }
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(child: CustomText(text: 'No products found', fontSize: 14.sp));
+                    return Center(
+                        child: CustomText(
+                            text: 'No products found', fontSize: 14.sp));
                   }
 
                   if (_allProducts.isEmpty) {
@@ -87,25 +92,35 @@ class _ProductScreenState extends State<ProductScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => ProductDetailScreen(product: product),
+                              builder: (_) =>
+                                  ProductDetailScreen(product: product),
                             ),
                           );
                         },
                         child: Card(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.r)),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Expanded(
-                                child: Image.network(product.thumbnail, fit: BoxFit.cover, width: double.infinity),
+                                child: Image.network(product.thumbnail,
+                                    fit: BoxFit.cover, width: double.infinity),
                               ),
                               Padding(
                                 padding: EdgeInsets.all(8.r),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    CustomText(text: product.title, fontSize: 14.sp, fontWeight: FontWeight.bold, maxLines: 1, overflow: TextOverflow.ellipsis),
-                                    CustomText(text: '\$${product.price}', fontSize: 12.sp),
+                                    CustomText(
+                                        text: product.title,
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.bold,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis),
+                                    CustomText(
+                                        text: '\$${product.price}',
+                                        fontSize: 12.sp),
                                   ],
                                 ),
                               ),

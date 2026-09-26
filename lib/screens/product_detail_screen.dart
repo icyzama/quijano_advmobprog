@@ -4,6 +4,7 @@ import '../constants.dart';
 import '../models/product.dart';
 import '../models/cart.dart';
 import '../services/cart_service.dart';
+import '../services/user_service.dart';
 import '../widgets/custom_text.dart';
 
 // Enhancement 2: Details page shown when a product/article card is clicked.
@@ -18,13 +19,24 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _isAdding = false;
+  final UserService _userService = UserService();
 
   Future<void> _addToCart() async {
     setState(() => _isAdding = true);
     try {
-      // Enhancement 3: Add the displayed product to the selected user's cart.
+      final user = await _userService.getUser();
+      if (user == null) {
+        if (!mounted) return;
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRoutes.signIn,
+          (route) => false,
+        );
+        return;
+      }
+
+      // Enhancement 3: Add the displayed product to the authenticated user's cart.
       final Cart cart = await CartService().addToCart(
-        userId: cartUserId,
+        userId: user.id,
         productId: widget.product.id,
         quantity: 1,
       );
@@ -59,7 +71,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           children: [
             Center(
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(12.r),
+                borderRadius: BorderRadius.circular(8.r),
                 child: Image.network(widget.product.thumbnail,
                     height: 250.h, fit: BoxFit.cover),
               ),

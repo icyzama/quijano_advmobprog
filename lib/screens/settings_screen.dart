@@ -14,7 +14,8 @@ class SettingsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const CustomText(text: 'Settings', fontSize: 20, fontWeight: FontWeight.bold),
+        title: const CustomText(
+            text: 'Settings', fontSize: 20, fontWeight: FontWeight.bold),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
