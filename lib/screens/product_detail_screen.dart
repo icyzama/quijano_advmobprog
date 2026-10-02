@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../constants.dart';
 import '../models/product.dart';
 import '../models/cart.dart';
+import '../models/user.dart';
 import '../services/cart_service.dart';
 import '../services/user_service.dart';
 import '../widgets/custom_text.dart';
@@ -30,6 +31,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         Navigator.of(context).pushNamedAndRemoveUntil(
           AppRoutes.signIn,
           (route) => false,
+        );
+        return;
+      }
+
+      if (user.loginType == LoginType.firebase) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Cart actions are available for API accounts only.'),
+          ),
         );
         return;
       }

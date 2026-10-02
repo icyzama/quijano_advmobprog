@@ -28,3 +28,20 @@ The project continues to use a layered Model-View-Service structure with Provide
 
 ### Cart by User ID
 The cart no longer uses a hardcoded account id. `CartScreen` restores the authenticated user through `UserService.getUser()`, reads `user.id`, and passes that value into `CartService.getCartByUserId(user.id)`, which calls DummyJSON at `$host/carts/user/{userId}`. Product detail add-to-cart follows the same authenticated-user flow before calling `CartService.addToCart()`. If the API returns no cart for the signed-in user, the screen renders a professional empty state instead of failing.
+
+## Lab Activity 5: Firebase Discussion
+
+### Dual Authentication Architecture
+The application now supports two authentication sources through the existing `UserService`: DummyJSON API authentication and Firebase Authentication. `LoginType` is stored with the local `User` model so the app knows whether the current session came from `dummyJson` or `firebase` instead of guessing from the email or username.
+
+### DummyJSON Preservation
+The Lab Activity 4 flow remains available. API users still authenticate through `$host/auth/login`, are parsed into the `User` model, persist through `SharedPreferences`, render on the profile screen, and load carts through `CartService.getCartByUserId(user.id)`.
+
+### Firebase Flow
+Firebase email/password sign-in and account creation are implemented through `firebase_auth`. Firebase Authentication stores the email/password account and display name. Additional signup profile fields required by the activity, such as first name, last name, age, contact number, and username, are saved locally through the existing `User` model and `SharedPreferences`; they are not claimed to be stored inside Firebase Authentication.
+
+### Profile and Account Actions
+`ProfileScreen` renders different information depending on `LoginType`. DummyJSON users see API profile data and logout. Firebase users see locally persisted profile data plus Firebase account actions for username update, password change through recent reauthentication, account deletion with confirmation and password reauthentication, and logout.
+
+### Firebase Configuration
+The project is configured with FlutterFire for Android using the Firebase project `quijano-advmobprog`. The generated `lib/firebase_options.dart`, `android/app/google-services.json`, `firebase.json`, and Android Gradle Google services plugin entries connect the app to Firebase. Email/Password authentication must be enabled in the Firebase Console before Firebase login/signup can accept accounts.

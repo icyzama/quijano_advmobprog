@@ -17,7 +17,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final UserService _userService = UserService();
   late Future<User?> _userFuture;
-  bool _isLoggingOut = false;
+  bool _isWorking = false;
 
   @override
   void initState() {
@@ -25,10 +25,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _userFuture = _userService.getUser();
   }
 
-  Future<void> _logout() async {
-    if (_isLoggingOut) return;
+  void _setUser(User user) {
+    setState(() => _userFuture = Future.value(user));
+  }
 
-    setState(() => _isLoggingOut = true);
+  Future<void> _logout() async {
+    if (_isWorking) return;
+
+    setState(() => _isWorking = true);
     await _userService.logout();
 
     if (!mounted) return;
@@ -36,6 +40,172 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Navigator.of(context).pushNamedAndRemoveUntil(
       AppRoutes.signIn,
       (route) => false,
+    );
+  }
+
+  Future<void> _updateUsername(User user) async {
+    final controller = TextEditingController(text: user.username);
+    final username = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Update Username'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(labelText: 'Username'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+
+    if (username == null) return;
+
+    try {
+      final updatedUser = await _userService.updateUsername(username);
+      if (!mounted) return;
+      _setUser(updatedUser);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Username updated')),
+      );
+    } on UserServiceException catch (error) {
+      _showError(error.message);
+    }
+  }
+
+  Future<void> _changePassword() async {
+    final currentController = TextEditingController();
+    final newController = TextEditingController();
+    final confirmController = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Change Password'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: currentController,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'Current Password'),
+            ),
+            SizedBox(height: 12.h),
+            TextField(
+              controller: newController,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'New Password'),
+            ),
+            SizedBox(height: 12.h),
+            TextField(
+              controller: confirmController,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'Confirm Password'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Update'),
+          ),
+        ],
+      ),
+    );
+
+    final currentPassword = currentController.text;
+    final newPassword = newController.text;
+    final confirmPassword = confirmController.text;
+    currentController.dispose();
+    newController.dispose();
+    confirmController.dispose();
+
+    if (confirmed != true) return;
+    if (newPassword != confirmPassword) {
+      _showError('New password and confirmation must match.');
+      return;
+    }
+
+    try {
+      await _userService.resetPasswordFromCurrentPassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password updated')),
+      );
+    } on UserServiceException catch (error) {
+      _showError(error.message);
+    }
+  }
+
+  Future<void> _deleteAccount() async {
+    final passwordController = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Account'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('This permanently deletes your Firebase account.'),
+            SizedBox(height: 14.h),
+            TextField(
+              controller: passwordController,
+              obscureText: true,
+              decoration: const InputDecoration(labelText: 'Password'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    final password = passwordController.text;
+    passwordController.dispose();
+
+    if (confirmed != true) return;
+
+    try {
+      await _userService.deleteAccount(password: password);
+      if (!mounted) return;
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        AppRoutes.signIn,
+        (route) => false,
+      );
+    } on UserServiceException catch (error) {
+      _showError(error.message);
+    }
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 
@@ -68,76 +238,236 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               _ProfileHeader(user: user),
               SizedBox(height: 16.h),
-              AppSection(
-                children: [
-                  CustomText(
-                    text: 'Account Information',
-                    fontSize: 17.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  SizedBox(height: 8.h),
-                  InfoTile(
-                    icon: Icons.mail_outline,
-                    label: 'Email',
-                    value: user.email,
-                  ),
-                  InfoTile(
-                    icon: Icons.badge_outlined,
-                    label: 'Username',
-                    value: user.username,
-                  ),
-                  InfoTile(
-                    icon: Icons.person_outline,
-                    label: 'Gender',
-                    value: user.gender,
-                  ),
-                  InfoTile(
-                    icon: Icons.cake_outlined,
-                    label: 'Age',
-                    value: user.age?.toString() ?? '',
-                  ),
-                  InfoTile(
-                    icon: Icons.confirmation_number_outlined,
-                    label: 'User ID',
-                    value: user.id.toString(),
-                  ),
-                ],
-              ),
+              _AccountInfo(user: user),
               SizedBox(height: 16.h),
-              AppSection(
-                children: [
-                  CustomText(
-                    text: 'Account',
-                    fontSize: 17.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  SizedBox(height: 14.h),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48.h,
-                    child: OutlinedButton.icon(
-                      onPressed: _isLoggingOut ? null : _logout,
-                      icon: _isLoggingOut
-                          ? SizedBox(
-                              width: 18.w,
-                              height: 18.w,
-                              child: const CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Icon(Icons.logout),
-                      label: Text(_isLoggingOut ? 'Signing out...' : 'Logout'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.error,
-                        side: const BorderSide(color: AppColors.error),
-                      ),
-                    ),
-                  ),
-                ],
+              _AccountActions(
+                user: user,
+                isWorking: _isWorking,
+                onLogout: _logout,
+                onUpdateUsername: () => _updateUsername(user),
+                onChangePassword: _changePassword,
+                onDeleteAccount: _deleteAccount,
               ),
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _AccountInfo extends StatelessWidget {
+  const _AccountInfo({required this.user});
+
+  final User user;
+
+  @override
+  Widget build(BuildContext context) {
+    if (user.isFirebase) {
+      return AppSection(
+        accentColor: AppColors.teal,
+        children: [
+          CustomText(
+            text: 'Firebase Account',
+            fontSize: 17.sp,
+            fontWeight: FontWeight.bold,
+          ),
+          SizedBox(height: 8.h),
+          InfoTile(
+            icon: Icons.verified_user_outlined,
+            label: 'Authentication Source',
+            value: user.loginType.label,
+            accentColor: AppColors.teal,
+          ),
+          InfoTile(
+            icon: Icons.person_outline,
+            label: 'Full Name',
+            value: user.fullName,
+            accentColor: AppColors.nuBlue,
+          ),
+          InfoTile(
+            icon: Icons.badge_outlined,
+            label: 'Username',
+            value: user.username,
+            accentColor: AppColors.violet,
+          ),
+          InfoTile(
+            icon: Icons.mail_outline,
+            label: 'Email',
+            value: user.email,
+            accentColor: AppColors.sky,
+          ),
+          InfoTile(
+            icon: Icons.cake_outlined,
+            label: 'Age',
+            value: user.age == null || user.age == 0 ? '' : user.age.toString(),
+            accentColor: AppColors.nuGold,
+          ),
+          InfoTile(
+            icon: Icons.phone_outlined,
+            label: 'Contact Number',
+            value: user.contactNumber,
+            accentColor: AppColors.coral,
+          ),
+          InfoTile(
+            icon: Icons.fingerprint,
+            label: 'Firebase UID',
+            value: user.firebaseUid ?? '',
+            accentColor: AppColors.teal,
+          ),
+        ],
+      );
+    }
+
+    return AppSection(
+      accentColor: AppColors.nuBlue,
+      children: [
+        CustomText(
+          text: 'API Account Information',
+          fontSize: 17.sp,
+          fontWeight: FontWeight.bold,
+        ),
+        SizedBox(height: 8.h),
+        InfoTile(
+          icon: Icons.verified_user_outlined,
+          label: 'Authentication Source',
+          value: user.loginType.label,
+          accentColor: AppColors.nuBlue,
+        ),
+        InfoTile(
+          icon: Icons.mail_outline,
+          label: 'Email',
+          value: user.email,
+          accentColor: AppColors.sky,
+        ),
+        InfoTile(
+          icon: Icons.badge_outlined,
+          label: 'Username',
+          value: user.username,
+          accentColor: AppColors.violet,
+        ),
+        InfoTile(
+          icon: Icons.person_outline,
+          label: 'Gender',
+          value: user.gender,
+          accentColor: AppColors.teal,
+        ),
+        InfoTile(
+          icon: Icons.cake_outlined,
+          label: 'Age',
+          value: user.age?.toString() ?? '',
+          accentColor: AppColors.nuGold,
+        ),
+        InfoTile(
+          icon: Icons.confirmation_number_outlined,
+          label: 'User ID',
+          value: user.id.toString(),
+          accentColor: AppColors.coral,
+        ),
+      ],
+    );
+  }
+}
+
+class _AccountActions extends StatelessWidget {
+  const _AccountActions({
+    required this.user,
+    required this.isWorking,
+    required this.onLogout,
+    required this.onUpdateUsername,
+    required this.onChangePassword,
+    required this.onDeleteAccount,
+  });
+
+  final User user;
+  final bool isWorking;
+  final VoidCallback onLogout;
+  final VoidCallback onUpdateUsername;
+  final VoidCallback onChangePassword;
+  final VoidCallback onDeleteAccount;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppSection(
+      accentColor: user.isFirebase ? AppColors.teal : AppColors.nuGold,
+      children: [
+        CustomText(
+          text: 'Account',
+          fontSize: 17.sp,
+          fontWeight: FontWeight.bold,
+        ),
+        SizedBox(height: 14.h),
+        if (user.isFirebase) ...[
+          _ActionButton(
+            icon: Icons.edit_outlined,
+            label: 'Update Username',
+            onPressed: onUpdateUsername,
+          ),
+          _ActionButton(
+            icon: Icons.password_outlined,
+            label: 'Change Password',
+            onPressed: onChangePassword,
+          ),
+          _ActionButton(
+            icon: Icons.delete_outline,
+            label: 'Delete Firebase Account',
+            color: AppColors.error,
+            onPressed: onDeleteAccount,
+          ),
+        ],
+        SizedBox(
+          width: double.infinity,
+          height: 48.h,
+          child: OutlinedButton.icon(
+            onPressed: isWorking ? null : onLogout,
+            icon: isWorking
+                ? SizedBox(
+                    width: 18.w,
+                    height: 18.w,
+                    child: const CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.logout),
+            label: Text(isWorking ? 'Signing out...' : 'Logout'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.error,
+              side: const BorderSide(color: AppColors.error),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+    this.color = AppColors.nuBlue,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 10.h),
+      child: SizedBox(
+        width: double.infinity,
+        height: 46.h,
+        child: OutlinedButton.icon(
+          onPressed: onPressed,
+          icon: Icon(icon),
+          label: Text(label),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: color,
+            side: BorderSide(color: color.withValues(alpha: 0.45)),
+          ),
+        ),
       ),
     );
   }
@@ -167,14 +497,14 @@ class _ProfileHeader extends StatelessWidget {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
                 decoration: BoxDecoration(
-                  color: AppColors.nuGold,
+                  color: user.isFirebase ? AppColors.teal : AppColors.nuGold,
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: CustomText(
-                  text: 'ID ${user.id}',
+                  text: user.loginType.label,
                   fontSize: 11.sp,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.nuNavy,
+                  color: AppColors.surface,
                 ),
               ),
             ],

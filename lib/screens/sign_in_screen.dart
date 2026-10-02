@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../constants.dart';
+import '../models/user.dart';
 import '../services/user_service.dart';
 import '../widgets/custom_text.dart';
 import '../widgets/lab4_components.dart';
@@ -15,17 +16,18 @@ class SignInScreen extends StatefulWidget {
 
 class _SignInScreenState extends State<SignInScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _identifierController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final UserService _userService = UserService();
 
+  LoginType _loginType = LoginType.dummyJson;
   bool _isLoading = false;
   bool _obscurePassword = true;
   String? _errorMessage;
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _identifierController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -42,15 +44,22 @@ class _SignInScreenState extends State<SignInScreen> {
     });
 
     try {
-      await _userService.loginUser(
-        username: _usernameController.text.trim(),
-        password: _passwordController.text,
-      );
+      if (_loginType == LoginType.dummyJson) {
+        await _userService.loginUser(
+          username: _identifierController.text.trim(),
+          password: _passwordController.text,
+        );
+      } else {
+        await _userService.signIn(
+          email: _identifierController.text.trim(),
+          password: _passwordController.text,
+        );
+      }
 
       if (!mounted) return;
 
       Navigator.of(context).pushNamedAndRemoveUntil(
-        AppRoutes.home,
+        AppRoutes.splash,
         (route) => false,
       );
     } on UserServiceException catch (error) {
@@ -69,8 +78,20 @@ class _SignInScreenState extends State<SignInScreen> {
     }
   }
 
+  void _switchLoginType(LoginType type) {
+    if (_isLoading) return;
+    setState(() {
+      _loginType = type;
+      _errorMessage = null;
+      _identifierController.clear();
+      _passwordController.clear();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isFirebase = _loginType == LoginType.firebase;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -85,20 +106,21 @@ class _SignInScreenState extends State<SignInScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       SizedBox(height: 18.h),
-                      _BrandHeader(),
-                      SizedBox(height: 34.h),
+                      _BrandHeader(isFirebase: isFirebase),
+                      SizedBox(height: 28.h),
                       AppSection(
+                        accentColor:
+                            isFirebase ? AppColors.teal : AppColors.nuBlue,
                         children: [
                           CustomText(
                             text: 'Sign in',
                             fontSize: 22.sp,
                             fontWeight: FontWeight.bold,
                           ),
-                          SizedBox(height: 6.h),
-                          CustomText(
-                            text:
-                                'Use your API account credentials to continue.',
-                            fontSize: 13.sp,
+                          SizedBox(height: 14.h),
+                          _LoginTypeSelector(
+                            selectedType: _loginType,
+                            onChanged: _switchLoginType,
                           ),
                           SizedBox(height: 22.h),
                           Form(
@@ -106,16 +128,29 @@ class _SignInScreenState extends State<SignInScreen> {
                             child: Column(
                               children: [
                                 TextFormField(
-                                  controller: _usernameController,
+                                  controller: _identifierController,
                                   textInputAction: TextInputAction.next,
+                                  keyboardType: isFirebase
+                                      ? TextInputType.emailAddress
+                                      : TextInputType.text,
                                   enabled: !_isLoading,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Username',
-                                    prefixIcon: Icon(Icons.person_outline),
+                                  decoration: InputDecoration(
+                                    labelText: isFirebase
+                                        ? 'Email Address'
+                                        : 'Username',
+                                    prefixIcon: Icon(isFirebase
+                                        ? Icons.mail_outline
+                                        : Icons.person_outline),
                                   ),
                                   validator: (value) {
-                                    if (value == null || value.trim().isEmpty) {
-                                      return 'Username is required';
+                                    final input = value?.trim() ?? '';
+                                    if (input.isEmpty) {
+                                      return isFirebase
+                                          ? 'Email address is required'
+                                          : 'Username is required';
+                                    }
+                                    if (isFirebase && !_isValidEmail(input)) {
+                                      return 'Enter a valid email address';
                                     }
                                     return null;
                                   },
@@ -158,22 +193,7 @@ class _SignInScreenState extends State<SignInScreen> {
                           ),
                           if (_errorMessage != null) ...[
                             SizedBox(height: 16.h),
-                            Container(
-                              width: double.infinity,
-                              padding: EdgeInsets.all(12.w),
-                              decoration: BoxDecoration(
-                                color: AppColors.error.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(8.r),
-                                border: Border.all(
-                                  color: AppColors.error.withValues(alpha: 0.2),
-                                ),
-                              ),
-                              child: CustomText(
-                                text: _errorMessage!,
-                                fontSize: 12.sp,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                            _ErrorBox(message: _errorMessage!),
                           ],
                           SizedBox(height: 22.h),
                           SizedBox(
@@ -189,9 +209,25 @@ class _SignInScreenState extends State<SignInScreen> {
                                         strokeWidth: 2.5,
                                       ),
                                     )
-                                  : const Text('Continue'),
+                                  : Text(
+                                      isFirebase
+                                          ? 'Sign in with Firebase'
+                                          : 'Continue with API',
+                                    ),
                             ),
                           ),
+                          if (isFirebase) ...[
+                            SizedBox(height: 12.h),
+                            TextButton(
+                              onPressed: _isLoading
+                                  ? null
+                                  : () => Navigator.pushNamed(
+                                        context,
+                                        AppRoutes.signUp,
+                                      ),
+                              child: const Text('Create Firebase Account'),
+                            ),
+                          ],
                         ],
                       ),
                       const Spacer(),
@@ -205,9 +241,48 @@ class _SignInScreenState extends State<SignInScreen> {
       ),
     );
   }
+
+  bool _isValidEmail(String value) {
+    return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value);
+  }
+}
+
+class _LoginTypeSelector extends StatelessWidget {
+  const _LoginTypeSelector({
+    required this.selectedType,
+    required this.onChanged,
+  });
+
+  final LoginType selectedType;
+  final ValueChanged<LoginType> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return SegmentedButton<LoginType>(
+      segments: const [
+        ButtonSegment(
+          value: LoginType.dummyJson,
+          icon: Icon(Icons.cloud_queue),
+          label: Text('API Account'),
+        ),
+        ButtonSegment(
+          value: LoginType.firebase,
+          icon: Icon(Icons.local_fire_department_outlined),
+          label: Text('Firebase'),
+        ),
+      ],
+      selected: {selectedType},
+      onSelectionChanged: (selection) => onChanged(selection.first),
+      showSelectedIcon: false,
+    );
+  }
 }
 
 class _BrandHeader extends StatelessWidget {
+  const _BrandHeader({required this.isFirebase});
+
+  final bool isFirebase;
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -215,18 +290,47 @@ class _BrandHeader extends StatelessWidget {
         const NuLogo(size: 108),
         SizedBox(height: 20.h),
         CustomText(
-          text: 'Welcome to NU Commerce',
+          text: 'NUBD Exchange',
           fontSize: 24.sp,
           fontWeight: FontWeight.bold,
           textAlign: TextAlign.center,
         ),
         SizedBox(height: 8.h),
         CustomText(
-          text: 'A refined campus marketplace for everyday essentials.',
+          text: isFirebase
+              ? 'Use your Firebase email account.'
+              : 'Use your DummyJSON API account.',
           fontSize: 13.sp,
           textAlign: TextAlign.center,
+          color: AppColors.textSecondary,
         ),
       ],
+    );
+  }
+}
+
+class _ErrorBox extends StatelessWidget {
+  const _ErrorBox({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: AppColors.error.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(
+          color: AppColors.error.withValues(alpha: 0.2),
+        ),
+      ),
+      child: CustomText(
+        text: message,
+        fontSize: 12.sp,
+        fontWeight: FontWeight.w600,
+      ),
     );
   }
 }

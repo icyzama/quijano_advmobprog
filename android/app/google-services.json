@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "677629863881",
+    "project_id": "quijano-advmobprog",
+    "storage_bucket": "quijano-advmobprog.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:677629863881:android:2ed302137fe704a548aa18",
+        "android_client_info": {
+          "package_name": "com.example.quijano_advmobprog"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBwtgXQTmwL3UKgwMmYMR4UUZBx7kt8IGE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

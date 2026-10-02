@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../models/cart.dart';
 import '../models/product.dart';
+import '../models/user.dart';
 import '../services/cart_service.dart';
 import '../services/user_service.dart';
 import '../widgets/custom_text.dart';
@@ -33,6 +34,10 @@ class _CartScreenState extends State<CartScreen> {
     if (user == null) {
       throw const UserServiceException(
           'Please sign in again to view your cart.');
+    }
+
+    if (user.loginType == LoginType.firebase) {
+      return Cart.emptyForUser(0);
     }
 
     // Enhancement 3: User model id drives user-specific cart retrieval.
@@ -104,9 +109,12 @@ class _CartScreenState extends State<CartScreen> {
           if (cart == null || cart.products.isEmpty) {
             return AppStateMessage(
               icon: Icons.shopping_bag_outlined,
-              title: 'Your cart is empty',
-              message:
-                  'Products connected to your account will appear here once available.',
+              title: cart?.userId == 0
+                  ? 'API cart unavailable'
+                  : 'Your cart is empty',
+              message: cart?.userId == 0
+                  ? 'Firebase accounts do not have a DummyJSON user ID. Sign in with an API account to render a user-specific cart.'
+                  : 'Products connected to your account will appear here once available.',
               actionLabel: 'Refresh',
               onAction: _retry,
             );
