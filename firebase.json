@@ -1,1 +1,24 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"quijano-advmobprog","appId":"1:677629863881:android:2ed302137fe704a548aa18","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"quijano-advmobprog","configurations":{"android":"1:677629863881:android:2ed302137fe704a548aa18"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "quijano-advmobprog",
+          "appId": "1:677629863881:android:2ed302137fe704a548aa18",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "quijano-advmobprog",
+          "configurations": {
+            "android": "1:677629863881:android:2ed302137fe704a548aa18"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  }
+}

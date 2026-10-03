@@ -45,3 +45,23 @@ Firebase email/password sign-in and account creation are implemented through `fi
 
 ### Firebase Configuration
 The project is configured with FlutterFire for Android using the Firebase project `quijano-advmobprog`. The generated `lib/firebase_options.dart`, `android/app/google-services.json`, `firebase.json`, and Android Gradle Google services plugin entries connect the app to Firebase. Email/Password authentication must be enabled in the Firebase Console before Firebase login/signup can accept accounts.
+
+## Lab Activity 6: Firebase Chat
+
+### Firestore Setup
+The app uses Cloud Firestore for Firebase user directory profiles and one-to-one messages. In the Firebase Console, create the default Cloud Firestore database in a US location and start in Production mode. Publish the repository's authenticated, participant-scoped rules with:
+
+```sh
+firebase deploy --only firestore:rules --project quijano-advmobprog
+```
+
+The PDF sample suggests allowing all reads and writes. This project instead uses `firestore.rules` to require Firebase authentication, restrict user profile writes to their owner, and limit conversation reads and message status updates to participants.
+
+### Firebase User Directory
+After Firebase sign-up or sign-in, `UserService` syncs the chat profile fields (`uid`, email, username, first and last name, and image) to `users/{uid}`. `ChatService` streams those profiles and excludes the current UID. Accounts created before Lab 6 appear after they sign in again and sync their profile. DummyJSON sessions do not access the Firebase chat directory.
+
+### Conversations and Messages
+The second Home navigation tab is Chat; Shop, Cart, and Profile remain available. The chat list filters Firebase users by name, username, or email. Opening a person creates a deterministic conversation ID from the two sorted Firebase UIDs and streams `chat_rooms/{roomId}/messages` from Firestore. Messages contain sender and receiver UIDs, sender email, text, server timestamp, and status. New messages show a temporary sending state; Firestore status advances from sent to delivered and seen as the receiver opens the conversation. Message bubbles use brief fade-and-slide entrance animation.
+
+### Layer Responsibilities
+`Message` parses Firestore message documents. `ChatService` owns user streams, conversation IDs, message writes, and status updates. `UserService` owns Firebase authentication and profile synchronization. `ChatScreen` searches and lists other users, while `ChatDetailScreen` renders the live conversation and composer. `HomeScreen` keeps the chat list in the second navigation position without removing the Lab 4 cart.

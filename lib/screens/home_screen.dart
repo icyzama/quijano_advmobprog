@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../constants.dart';
 import '../widgets/custom_text.dart';
 import '../widgets/lab4_components.dart';
+import 'chat_screen.dart';
 import 'cart_screen.dart';
 import 'profile_screen.dart';
 import 'product_screen.dart';
@@ -50,20 +51,11 @@ class _HomeScreenState extends State<HomeScreen> {
         physics: const NeverScrollableScrollPhysics(),
         children: const [
           ProductScreen(),
+          ChatScreen(),
           CartScreen(),
           ProfileScreen(),
         ],
       ),
-      // Enhancement 2: Chat is a floating action instead of a bottom-nav item.
-      floatingActionButton: _selectedIndex == 1
-          ? null
-          : FloatingActionButton(
-              tooltip: 'Open chat',
-              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Chat opened')),
-              ),
-              child: const Icon(Icons.chat),
-            ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) {
@@ -75,6 +67,8 @@ class _HomeScreenState extends State<HomeScreen> {
         items: const [
           BottomNavigationBarItem(
               icon: Icon(Icons.shopping_bag), label: 'Shop'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.forum_outlined), label: 'Chat'),
           BottomNavigationBarItem(
               icon: Icon(Icons.shopping_cart), label: 'Cart'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),

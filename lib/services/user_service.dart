@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:http/http.dart' as http;
@@ -103,11 +104,22 @@ class UserService {
       }
 
       final savedUser = await getUser();
-      final user = _firebaseUserToLocalUser(firebaseUser, savedUser);
+      final cloudUser = await _getFirebaseProfile(firebaseUser.uid);
+      final profileUser = savedUser?.firebaseUid == firebaseUser.uid
+          ? savedUser
+          : cloudUser ?? savedUser;
+      final user = _firebaseUserToLocalUser(
+        firebaseUser,
+        profileUser,
+      );
+      await _syncFirebaseProfile(user);
       await saveUserData(user);
       return user;
     } on fb.FirebaseAuthException catch (error) {
       throw UserServiceException(_firebaseErrorMessage(error));
+    } on FirebaseException catch (error) {
+      await _firebaseAuth.signOut();
+      throw UserServiceException(_firestoreErrorMessage(error));
     }
   }
 
@@ -144,10 +156,15 @@ class UserService {
         image: firebaseUser.photoURL ?? '',
       );
 
+      await _syncFirebaseProfile(user, isNewAccount: true);
       await saveUserData(user);
       return user;
     } on fb.FirebaseAuthException catch (error) {
       throw UserServiceException(_firebaseErrorMessage(error));
+    } on FirebaseException catch (error) {
+      await _firebaseAuth.signOut();
+      await _clearUserData();
+      throw UserServiceException(_firestoreErrorMessage(error));
     }
   }
 
@@ -166,10 +183,13 @@ class UserService {
       final updatedUser = (currentUser ??
               _firebaseUserToLocalUser(_requireFirebaseUser(), null))
           .copyWith(username: trimmedUsername, loginType: LoginType.firebase);
+      await _syncFirebaseProfile(updatedUser);
       await saveUserData(updatedUser);
       return updatedUser;
     } on fb.FirebaseAuthException catch (error) {
       throw UserServiceException(_firebaseErrorMessage(error));
+    } on FirebaseException catch (error) {
+      throw UserServiceException(_firestoreErrorMessage(error));
     }
   }
 
@@ -203,10 +223,16 @@ class UserService {
     try {
       final firebaseUser = _requireFirebaseUser();
       await _reauthenticate(firebaseUser, password);
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(firebaseUser.uid)
+          .delete();
       await firebaseUser.delete();
       await _clearUserData();
     } on fb.FirebaseAuthException catch (error) {
       throw UserServiceException(_firebaseErrorMessage(error));
+    } on FirebaseException catch (error) {
+      throw UserServiceException(_firestoreErrorMessage(error));
     }
   }
 
@@ -243,6 +269,23 @@ class UserService {
       await logout();
       return null;
     }
+  }
+
+  Future<User?> ensureFirebaseProfileSynced() async {
+    final firebaseUser = currentFirebaseUser;
+    final savedUser = await getUser();
+    if (firebaseUser == null || savedUser?.isFirebase != true) {
+      return savedUser;
+    }
+
+    final cloudUser = await _getFirebaseProfile(firebaseUser.uid);
+    final profileUser = savedUser?.firebaseUid == firebaseUser.uid
+        ? savedUser
+        : cloudUser ?? savedUser;
+    final user = _firebaseUserToLocalUser(firebaseUser, profileUser);
+    await _syncFirebaseProfile(user, isNewAccount: cloudUser == null);
+    await saveUserData(user);
+    return user;
   }
 
   Future<LoginType?> getLoginType() async {
@@ -334,6 +377,48 @@ class UserService {
         .timeout(const Duration(seconds: 2), onTimeout: () => null);
   }
 
+  Future<void> _syncFirebaseProfile(
+    User user, {
+    bool isNewAccount = false,
+  }) async {
+    final uid = user.firebaseUid;
+    if (!user.isFirebase || uid == null || uid.isEmpty) return;
+
+    final profile = <String, dynamic>{
+      'uid': uid,
+      'email': user.email,
+      'username': user.username,
+      'firstName': user.firstName,
+      'lastName': user.lastName,
+      'image': user.image,
+      'updatedAt': FieldValue.serverTimestamp(),
+      if (isNewAccount) 'createdAt': FieldValue.serverTimestamp(),
+    };
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .set(profile, SetOptions(merge: true));
+  }
+
+  Future<User?> _getFirebaseProfile(String uid) async {
+    final snapshot =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final data = snapshot.data();
+    if (!snapshot.exists || data == null) return null;
+
+    return User.firebaseProfile(
+      firebaseUid: uid,
+      email: data['email'] as String? ?? '',
+      username: data['username'] as String? ?? '',
+      firstName: data['firstName'] as String? ?? '',
+      lastName: data['lastName'] as String? ?? '',
+      age: 0,
+      contactNumber: '',
+      image: data['image'] as String? ?? '',
+    );
+  }
+
   User _firebaseUserToLocalUser(fb.User firebaseUser, User? savedUser) {
     final displayName = firebaseUser.displayName?.trim();
     final fallbackUsername = firebaseUser.email?.split('@').first ?? 'firebase';
@@ -384,6 +469,19 @@ class UserService {
         return 'Please sign in again before changing sensitive account details.';
       default:
         return error.message ?? 'Firebase authentication failed.';
+    }
+  }
+
+  String _firestoreErrorMessage(FirebaseException error) {
+    switch (error.code) {
+      case 'permission-denied':
+        return 'Firestore denied access. Publish the Lab 6 security rules and try again.';
+      case 'failed-precondition':
+        return 'Cloud Firestore is not ready. Create the Firestore database in Firebase Console.';
+      case 'unavailable':
+        return 'Firestore is unavailable. Check your connection and try again.';
+      default:
+        return 'Could not save or load your cloud profile. Check the Firestore setup and try again.';
     }
   }
 
